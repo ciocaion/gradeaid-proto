@@ -16,6 +16,72 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Sparkles } from "lucide-react";
 
+const questions = [
+  {
+    text: "What would you like to learn today?",
+    input: (subject: string, setSubject: (value: string) => void, onNext: () => void) => (
+      <div className="mt-4">
+        <Input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="e.g., Multiplication with 2-digit numbers"
+          className="text-lg"
+        />
+        <Button 
+          className="mt-4 w-full"
+          onClick={() => subject && onNext()}
+        >
+          Let's Learn This!
+        </Button>
+      </div>
+    )
+  },
+  {
+    text: "How do you prefer to learn?",
+    input: (setValue: (field: string, value: any) => void, onNext: () => void) => (
+      <Select
+        name="learningStyle"
+        onValueChange={(value) => {
+          setValue("learningStyle", value);
+          onNext();
+        }}
+      >
+        <SelectTrigger className="mt-4">
+          <SelectValue placeholder="Select your learning style" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="visual">I learn best by seeing</SelectItem>
+          <SelectItem value="auditory">I learn best by listening</SelectItem>
+          <SelectItem value="interactive">I learn best by doing</SelectItem>
+          <SelectItem value="reading">I learn best by reading</SelectItem>
+        </SelectContent>
+      </Select>
+    )
+  },
+  {
+    text: "How would you like to show what you've learned?",
+    input: (setValue: (field: string, value: any) => void, onNext: () => void) => (
+      <Select
+        name="preferredDemonstration"
+        onValueChange={(value) => {
+          setValue("preferredDemonstration", value);
+          onNext();
+        }}
+      >
+        <SelectTrigger className="mt-4">
+          <SelectValue placeholder="Select how you want to demonstrate" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="quiz">Through quizzes</SelectItem>
+          <SelectItem value="project">By creating projects</SelectItem>
+          <SelectItem value="discussion">By discussing</SelectItem>
+          <SelectItem value="writing">By writing</SelectItem>
+        </SelectContent>
+      </Select>
+    )
+  }
+];
+
 export default function Home() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -70,71 +136,7 @@ export default function Home() {
     }
   });
 
-  const questions = [
-    {
-      text: "What would you like to learn today?",
-      input: (
-        <div className="mt-4">
-          <Input
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="e.g., Multiplication with 2-digit numbers"
-            className="text-lg"
-          />
-          <Button 
-            className="mt-4 w-full"
-            onClick={() => subject && setStep(1)}
-          >
-            Let's Learn This!
-          </Button>
-        </div>
-      )
-    },
-    {
-      text: "How do you prefer to learn?",
-      input: (
-        <Select
-          name="learningStyle"
-          onValueChange={(value) => {
-            form.setValue("learningStyle", value as any);
-            setStep(2);
-          }}
-        >
-          <SelectTrigger className="mt-4">
-            <SelectValue placeholder="Select your learning style" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="visual">I learn best by seeing</SelectItem>
-            <SelectItem value="auditory">I learn best by listening</SelectItem>
-            <SelectItem value="interactive">I learn best by doing</SelectItem>
-            <SelectItem value="reading">I learn best by reading</SelectItem>
-          </SelectContent>
-        </Select>
-      )
-    },
-    {
-      text: "How would you like to show what you've learned?",
-      input: (
-        <Select
-          name="preferredDemonstration"
-          onValueChange={(value) => {
-            form.setValue("preferredDemonstration", value as any);
-            setStep(3);
-          }}
-        >
-          <SelectTrigger className="mt-4">
-            <SelectValue placeholder="Select how you want to demonstrate" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="quiz">Through quizzes</SelectItem>
-            <SelectItem value="project">By creating projects</SelectItem>
-            <SelectItem value="discussion">By discussing</SelectItem>
-            <SelectItem value="writing">By writing</SelectItem>
-          </SelectContent>
-        </Select>
-      )
-    }
-  ];
+  const nextStep = () => setStep(s => s + 1);
 
   return (
     <div className="min-h-screen bg-background p-6 flex items-center justify-center">
@@ -175,7 +177,9 @@ export default function Home() {
                         <Sparkles className="w-5 h-5 text-blue-500" />
                         <p className="text-xl font-medium">{questions[step].text}</p>
                       </div>
-                      {questions[step].input}
+                      {step === 0 && questions[0].input(subject, setSubject, nextStep)}
+                      {step === 1 && questions[1].input(form.setValue, nextStep)}
+                      {step === 2 && questions[2].input(form.setValue, nextStep)}
                     </motion.div>
                   </AnimatePresence>
 
