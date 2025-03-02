@@ -114,6 +114,7 @@ export default function Learn() {
                 <TabsList>
                   <TabsTrigger value="content">Content</TabsTrigger>
                   <TabsTrigger value="quiz">Quiz</TabsTrigger>
+                  <TabsTrigger value="videos">Videos</TabsTrigger>
                   <TabsTrigger value="activities">Activities</TabsTrigger>
                 </TabsList>
 
@@ -155,7 +156,23 @@ export default function Learn() {
                     </div>
                   ))}
                 </TabsContent>
-
+                <TabsContent value="videos">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(session.content as any).videos?.map((video: any) => (
+                      <div key={video.id} className="aspect-video">
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={`https://www.youtube.com/embed/${video.id}`}
+                          title={video.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                        <p className="mt-2 text-sm font-medium">{video.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
                 <TabsContent value="activities">
                   <ul className="list-disc pl-6 space-y-2">
                     {(session.content as any).suggestions?.map((suggestion: string, i: number) => (
