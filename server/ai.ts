@@ -13,6 +13,7 @@ export async function generateLearningContent(subject: string, style: string, sp
     const prompt = `
       Generate educational content about "${subject}" adapted for a ${style} learning style.
       ${specialNeeds ? `Consider these special needs: ${specialNeeds}` : ''}
+      Consider that we are providing Danish language YouTube content, so adjust the suggestions and activities to align with Danish cultural context when possible.
 
       Respond with JSON in this format:
       {
@@ -33,7 +34,7 @@ export async function generateLearningContent(subject: string, style: string, sp
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content creator skilled in Universal Design for Learning principles."
+          content: "You are an expert educational content creator skilled in Universal Design for Learning principles, with knowledge of Danish educational context."
         },
         {
           role: "user",
@@ -65,7 +66,7 @@ export async function generateFeedback(userResponse: string, subject: string): P
     messages: [
       {
         role: "system",
-        content: "You are a supportive educational assistant. Provide constructive feedback."
+        content: "You are a supportive educational assistant with knowledge of Danish educational context. Provide constructive feedback."
       },
       {
         role: "user",
