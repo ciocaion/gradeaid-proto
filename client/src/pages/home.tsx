@@ -37,20 +37,34 @@ export default function Home() {
 
   const profileMutation = useMutation({
     mutationFn: async (data: InsertLearningProfile) => {
-      const res = await apiRequest("POST", "/api/profiles", data);
-      return res.json();
+      // First create the profile
+      const profileRes = await apiRequest("POST", "/api/profiles", data);
+      const profile = await profileRes.json();
+
+      // Then create a learning session
+      const sessionRes = await apiRequest("POST", "/api/sessions", {
+        profileId: profile.id,
+        subject: subject,
+        content: {
+          learningStyle: data.learningStyle,
+          specialNeeds: data.specialNeeds
+        }
+      });
+      await sessionRes.json();
+
+      return profile;
     },
     onSuccess: (data) => {
       toast({
-        title: "Profile Created!",
-        description: "Let's start learning!",
+        title: "Ready to Learn!",
+        description: "Your personalized learning content has been prepared.",
       });
       setLocation(`/learn/${data.id}`);
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create profile. Please try again.",
+        description: "Failed to create learning session. Please try again.",
         variant: "destructive"
       });
     }
@@ -148,7 +162,7 @@ export default function Home() {
           <Card>
             <CardContent className="pt-16">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => profileMutation.mutate({ ...data, specialNeeds: subject }))}>
+                <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={step}
@@ -200,7 +214,7 @@ export default function Home() {
                         className="w-full"
                         disabled={profileMutation.isPending}
                       >
-                        {profileMutation.isPending ? "Creating Profile..." : "Start Learning"}
+                        {profileMutation.isPending ? "Preparing Your Content..." : "Start Learning"}
                       </Button>
                     </motion.div>
                   )}
