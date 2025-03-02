@@ -1,22 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, useParams } from "wouter";
+import { useParams } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LearningProfile, LearningSession } from "@shared/schema";
 import { LearningGame } from "@/components/LearningGame";
 import { AIAvatar } from "@/components/AIAvatar";
-import { queryClient } from "@/lib/queryClient";
 
 export default function Learn() {
   const params = useParams<{ id: string }>();
   const { toast } = useToast();
-  const [subject, setSubject] = useState("");
   const [feedback, setFeedback] = useState("");
 
   const profileQuery = useQuery<LearningProfile>({
@@ -25,28 +22,6 @@ export default function Learn() {
 
   const sessionsQuery = useQuery<LearningSession[]>({
     queryKey: [`/api/sessions/profile/${params.id}`],
-  });
-
-  const sessionMutation = useMutation({
-    mutationFn: async (data: { subject: string }) => {
-      const res = await apiRequest("POST", "/api/sessions", {
-        profileId: parseInt(params.id),
-        subject: data.subject,
-        content: {
-          learningStyle: profileQuery.data?.learningStyle,
-          specialNeeds: profileQuery.data?.specialNeeds
-        }
-      });
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Learning Session Created",
-        description: "Content has been generated based on your preferences.",
-      });
-      sessionsQuery.refetch();
-      setSubject("");
-    }
   });
 
   const feedbackMutation = useMutation({
@@ -99,33 +74,9 @@ export default function Learn() {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>What would you like to learn today?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
-              <Input
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter a subject (e.g., 'Multiplication with 2-digit numbers')"
-              />
-              <Button
-                onClick={() => sessionMutation.mutate({ subject })}
-                disabled={sessionMutation.isPending}
-              >
-                Start Learning
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
         {sessions.map((session) => (
           <Card key={session.id} className="mt-4">
-            <CardHeader>
-              <CardTitle>{session.subject}</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Tabs defaultValue="content">
                 <TabsList>
                   <TabsTrigger value="content">Content</TabsTrigger>
@@ -133,6 +84,7 @@ export default function Learn() {
                   <TabsTrigger value="videos">Videos</TabsTrigger>
                   <TabsTrigger value="game">Game</TabsTrigger>
                   <TabsTrigger value="activities">Activities</TabsTrigger>
+                  <TabsTrigger value="help">Ask for Help</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="content">
@@ -173,6 +125,7 @@ export default function Learn() {
                     </div>
                   ))}
                 </TabsContent>
+
                 <TabsContent value="videos">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(session.content as any).videos?.map((video: any) => (
@@ -190,6 +143,7 @@ export default function Learn() {
                     ))}
                   </div>
                 </TabsContent>
+
                 <TabsContent value="game">
                   {(session.content as any).game ? (
                     <LearningGame game={(session.content as any).game} />
@@ -197,12 +151,20 @@ export default function Learn() {
                     <p className="text-muted-foreground">No interactive game available for this lesson.</p>
                   )}
                 </TabsContent>
+
                 <TabsContent value="activities">
                   <ul className="list-disc pl-6 space-y-2">
                     {(session.content as any).suggestions?.map((suggestion: string, i: number) => (
                       <li key={i}>{suggestion}</li>
                     ))}
                   </ul>
+                </TabsContent>
+
+                <TabsContent value="help">
+                  <AIAvatar 
+                    onSendMessage={handleAIMessage}
+                    initialMessage={`Hi! I'm your AI tutor. How can I help you understand ${session.subject} better?`}
+                  />
                 </TabsContent>
               </Tabs>
 
@@ -232,11 +194,6 @@ export default function Learn() {
           </Card>
         ))}
       </div>
-
-      <AIAvatar 
-        onSendMessage={handleAIMessage}
-        initialMessage={`Hi ${profileQuery.data?.learningStyle} learner! I'm your AI tutor. What would you like to learn today?`}
-      />
     </div>
   );
 }
