@@ -16,10 +16,20 @@ import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Sparkles } from "lucide-react";
 
-const questions = [
+type Question = {
+  text: string;
+  render: (props: {
+    subject: string;
+    setSubject: (value: string) => void;
+    setValue: (field: string, value: any) => void;
+    onNext: () => void;
+  }) => JSX.Element;
+};
+
+const questions: Question[] = [
   {
     text: "What would you like to learn today?",
-    input: (subject: string, setSubject: (value: string) => void, onNext: () => void) => (
+    render: ({ subject, setSubject, onNext }) => (
       <div className="mt-4">
         <Input
           value={subject}
@@ -29,7 +39,7 @@ const questions = [
         />
         <Button 
           className="mt-4 w-full"
-          onClick={() => subject && onNext()}
+          onClick={() => subject.trim() && onNext()}
         >
           Let's Learn This!
         </Button>
@@ -38,7 +48,7 @@ const questions = [
   },
   {
     text: "How do you prefer to learn?",
-    input: (setValue: (field: string, value: any) => void, onNext: () => void) => (
+    render: ({ setValue, onNext }) => (
       <Select
         name="learningStyle"
         onValueChange={(value) => {
@@ -60,7 +70,7 @@ const questions = [
   },
   {
     text: "How would you like to show what you've learned?",
-    input: (setValue: (field: string, value: any) => void, onNext: () => void) => (
+    render: ({ setValue, onNext }) => (
       <Select
         name="preferredDemonstration"
         onValueChange={(value) => {
@@ -136,7 +146,8 @@ export default function Home() {
     }
   });
 
-  const nextStep = () => setStep(s => s + 1);
+  const nextStep = () => setStep(prev => Math.min(prev + 1, questions.length));
+  const currentQuestion = questions[step];
 
   return (
     <div className="min-h-screen bg-background p-6 flex items-center justify-center">
@@ -166,24 +177,29 @@ export default function Home() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
                   <AnimatePresence mode="wait">
-                    <motion.div
-                      key={step}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-blue-500" />
-                        <p className="text-xl font-medium">{questions[step].text}</p>
-                      </div>
-                      {step === 0 && questions[0].input(subject, setSubject, nextStep)}
-                      {step === 1 && questions[1].input(form.setValue, nextStep)}
-                      {step === 2 && questions[2].input(form.setValue, nextStep)}
-                    </motion.div>
+                    {currentQuestion && (
+                      <motion.div
+                        key={step}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="space-y-4"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-blue-500" />
+                          <p className="text-xl font-medium">{currentQuestion.text}</p>
+                        </div>
+                        {currentQuestion.render({
+                          subject,
+                          setSubject,
+                          setValue: form.setValue,
+                          onNext: nextStep
+                        })}
+                      </motion.div>
+                    )}
                   </AnimatePresence>
 
-                  {step === 3 && (
+                  {step === questions.length && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
