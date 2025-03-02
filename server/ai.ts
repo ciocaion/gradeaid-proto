@@ -15,7 +15,8 @@ export async function generateLearningContent(subject: string, style: string, sp
       ${specialNeeds ? `Consider these special needs: ${specialNeeds}` : ''}
       Consider that we are providing Danish language YouTube content, so adjust the suggestions and activities to align with Danish cultural context when possible.
 
-      Include an interactive game related to the subject. Choose either a matching game (matching related concepts) or a sorting game (arranging items in correct order).
+      Include an educational Snake game where players collect correct items related to the topic.
+      The game should have at least 5 correct items and 3 incorrect items that the snake can collect.
 
       Respond with JSON in this format:
       {
@@ -29,17 +30,25 @@ export async function generateLearningContent(subject: string, style: string, sp
         ],
         "suggestions": ["practical activity 1", "practical activity 2"],
         "game": {
-          "type": "matching OR sorting",
+          "type": "snake",
           "title": "game title",
           "description": "brief game description",
           "config": {
             "instructions": "game instructions",
+            "gridSize": 20,
+            "speed": 150,
             "items": [
               {
                 "id": "1",
-                "value": "item text",
-                "matches": "matching item text (for matching game)",
-                "correctPosition": 0 //for sorting game
+                "value": "correct item text",
+                "isCorrect": true,
+                "points": 10
+              },
+              {
+                "id": "2",
+                "value": "incorrect item text",
+                "isCorrect": false,
+                "points": -5
               }
             ]
           }

@@ -6,17 +6,19 @@ export interface VideoResult {
 }
 
 export interface GameData {
-  type: 'quiz' | 'matching' | 'sorting';
+  type: 'snake' | 'matching' | 'sorting';
   title: string;
   description: string;
   config: {
     items: Array<{
       id: string;
       value: string;
-      matches?: string;
-      correctPosition?: number;
+      isCorrect?: boolean;
+      points?: number;
     }>;
     instructions: string;
+    gridSize?: number;
+    speed?: number;
   };
 }
 

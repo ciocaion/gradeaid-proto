@@ -19,148 +19,161 @@ export function LearningGame({ game }: LearningGameProps) {
       const P5 = p5Module.default;
 
       p5Instance = new P5((p: p5) => {
-        const items = game.config.items;
-        let draggedItem: number | null = null;
+        const gridSize = game.config.gridSize || 20;
+        const cellSize = 20;
+        let snake: { x: number; y: number }[] = [];
+        let direction = { x: 1, y: 0 };
+        let food: { x: number; y: number; item: any }[] = [];
         let score = 0;
+        let gameOver = false;
+        let speed = game.config.speed || 150;
+        let lastUpdate = 0;
+
+        function spawnFood() {
+          const availableItems = game.config.items.filter(item => 
+            !food.some(f => f.item.id === item.id)
+          );
+
+          if (availableItems.length === 0) return;
+
+          const item = availableItems[Math.floor(Math.random() * availableItems.length)];
+          const position = {
+            x: Math.floor(Math.random() * gridSize),
+            y: Math.floor(Math.random() * gridSize),
+            item
+          };
+
+          // Ensure food doesn't spawn on snake
+          if (!snake.some(s => s.x === position.x && s.y === position.y)) {
+            food.push(position);
+          }
+        }
 
         p.setup = () => {
-          const canvas = p.createCanvas(600, 400);
+          const canvas = p.createCanvas(gridSize * cellSize, gridSize * cellSize);
           canvas.parent(canvasRef.current!);
           p.textAlign(p.CENTER, p.CENTER);
-          p.textSize(16);
+          p.textSize(12);
+
+          // Initialize snake in the middle
+          const midPoint = Math.floor(gridSize / 2);
+          snake = [
+            { x: midPoint, y: midPoint },
+            { x: midPoint - 1, y: midPoint },
+            { x: midPoint - 2, y: midPoint }
+          ];
+
+          // Spawn initial food
+          for (let i = 0; i < 3; i++) {
+            spawnFood();
+          }
         };
 
         p.draw = () => {
+          if (gameOver) {
+            p.background(220);
+            p.fill(50);
+            p.textSize(24);
+            p.text('Game Over!', p.width/2, p.height/2 - 30);
+            p.textSize(16);
+            p.text(`Final Score: ${score}`, p.width/2, p.height/2 + 10);
+            p.text('Press SPACE to restart', p.width/2, p.height/2 + 40);
+            return;
+          }
+
+          const now = p.millis();
+          if (now - lastUpdate > speed) {
+            updateGame();
+            lastUpdate = now;
+          }
+
           p.background(240);
 
           // Draw score
           p.fill(50);
-          p.textAlign(p.RIGHT, p.TOP);
-          p.text(`Score: ${score}`, p.width - 20, 20);
+          p.textAlign(p.LEFT, p.TOP);
+          p.textSize(16);
+          p.text(`Score: ${score}`, 10, 10);
 
-          // Draw instructions
-          p.textAlign(p.CENTER, p.TOP);
-          p.text(game.config.instructions, p.width/2, 20);
+          // Draw snake
+          p.noStroke();
+          snake.forEach((segment, i) => {
+            const isHead = i === 0;
+            p.fill(isHead ? p.color(100, 200, 100) : p.color(150, 220, 150));
+            p.rect(segment.x * cellSize, segment.y * cellSize, cellSize - 1, cellSize - 1, 4);
+          });
 
-          // Draw game based on type
-          if (game.type === 'matching') {
-            drawMatchingGame();
-          } else if (game.type === 'sorting') {
-            drawSortingGame();
+          // Draw food
+          food.forEach(f => {
+            p.fill(f.item.isCorrect ? p.color(100, 200, 255) : p.color(255, 100, 100));
+            p.rect(f.x * cellSize, f.y * cellSize, cellSize - 1, cellSize - 1, 4);
+            p.fill(50);
+            p.textAlign(p.CENTER, p.CENTER);
+            p.textSize(10);
+            p.text(f.item.value, (f.x + 0.5) * cellSize, (f.y + 0.5) * cellSize);
+          });
+        };
+
+        function updateGame() {
+          // Move snake
+          const newHead = {
+            x: (snake[0].x + direction.x + gridSize) % gridSize,
+            y: (snake[0].y + direction.y + gridSize) % gridSize
+          };
+
+          // Check self-collision
+          if (snake.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
+            gameOver = true;
+            return;
           }
-        };
 
-        const drawMatchingGame = () => {
-          const itemHeight = 50;
-          const gap = 20;
-          const leftX = p.width * 0.25;
-          const rightX = p.width * 0.75;
+          snake.unshift(newHead);
 
-          items.forEach((item, i) => {
-            const y = 80 + i * (itemHeight + gap);
+          // Check food collision
+          const foodIndex = food.findIndex(f => f.x === newHead.x && f.y === newHead.y);
+          if (foodIndex >= 0) {
+            const eatenFood = food[foodIndex];
+            score += eatenFood.item.points || 0;
+            food.splice(foodIndex, 1);
+            spawnFood();
 
-            // Draw left item
-            p.fill(draggedItem === i ? 220 : 200, 220, 255);
-            p.rect(leftX - 100, y, 200, itemHeight, 8);
-            p.fill(50);
-            p.textAlign(p.CENTER, p.CENTER);
-            p.text(item.value, leftX, y + itemHeight/2);
-
-            // Draw target (matching) item
-            p.fill(255, 220, 200);
-            p.rect(rightX - 100, y, 200, itemHeight, 8);
-            p.fill(50);
-            p.text(item.matches!, rightX, y + itemHeight/2);
-
-            // Check for match
-            if (draggedItem === i) {
-              p.line(
-                p.mouseX, p.mouseY,
-                leftX - 100 + 100, y + itemHeight/2
-              );
+            if (!eatenFood.item.isCorrect) {
+              // Remove tail for incorrect items
+              snake.pop();
+              snake.pop();
             }
-          });
-        };
+          } else {
+            snake.pop();
+          }
+        }
 
-        const drawSortingGame = () => {
-          const itemWidth = 100;
-          const itemHeight = 50;
-          const gap = 10;
-          const startX = (p.width - items.length * (itemWidth + gap)) / 2;
-
-          items.forEach((item, i) => {
-            const x = startX + i * (itemWidth + gap);
-            const y = p.height/2 - itemHeight/2;
-
-            // Draw background
-            p.fill(draggedItem === i ? 220 : 200, 220, 255);
-            p.rect(x, y, itemWidth, itemHeight, 8);
-
-            // Draw text
-            p.fill(50);
-            p.textAlign(p.CENTER, p.CENTER);
-            p.text(item.value, x + itemWidth/2, y + itemHeight/2);
-
-            // Draw dragged item
-            if (draggedItem === i) {
-              p.fill(220, 220, 255, 200);
-              p.rect(p.mouseX - itemWidth/2, p.mouseY - itemHeight/2, 
-                     itemWidth, itemHeight, 8);
-              p.fill(50);
-              p.text(item.value, p.mouseX, p.mouseY);
+        p.keyPressed = () => {
+          if (gameOver && p.keyCode === p.SPACE) {
+            // Reset game
+            score = 0;
+            gameOver = false;
+            const midPoint = Math.floor(gridSize / 2);
+            snake = [
+              { x: midPoint, y: midPoint },
+              { x: midPoint - 1, y: midPoint },
+              { x: midPoint - 2, y: midPoint }
+            ];
+            direction = { x: 1, y: 0 };
+            food = [];
+            for (let i = 0; i < 3; i++) {
+              spawnFood();
             }
-          });
-        };
+            return;
+          }
 
-        p.mousePressed = () => {
-          const itemHeight = 50;
-          const itemWidth = game.type === 'matching' ? 200 : 100;
-          const gap = game.type === 'matching' ? 20 : 10;
-
-          items.forEach((_, i) => {
-            const y = game.type === 'matching' ? 
-              80 + i * (itemHeight + gap) :
-              p.height/2 - itemHeight/2;
-
-            const x = game.type === 'matching' ?
-              p.width * 0.25 - 100 :
-              (p.width - items.length * (itemWidth + gap)) / 2 + i * (itemWidth + gap);
-
-            if (p.mouseX > x && p.mouseX < x + itemWidth &&
-                p.mouseY > y && p.mouseY < y + itemHeight) {
-              draggedItem = i;
-            }
-          });
-        };
-
-        p.mouseReleased = () => {
-          if (draggedItem !== null) {
-            if (game.type === 'sorting') {
-              const currentPos = draggedItem;
-              const correctPos = items[draggedItem].correctPosition;
-
-              if (currentPos === correctPos) {
-                score += 10;
-                p.fill(100, 255, 100);
-                p.textSize(24);
-                p.text('Correct!', p.width/2, p.height - 50);
-              }
-            } else if (game.type === 'matching') {
-              // Check if mouse is over the correct matching area
-              const itemHeight = 50;
-              const gap = 20;
-              const rightX = p.width * 0.75;
-              const y = 80 + draggedItem * (itemHeight + gap);
-
-              if (p.mouseX > rightX - 100 && p.mouseX < rightX + 100 &&
-                  p.mouseY > y && p.mouseY < y + itemHeight) {
-                score += 10;
-                p.fill(100, 255, 100);
-                p.textSize(24);
-                p.text('Match!', p.width/2, p.height - 50);
-              }
-            }
-            draggedItem = null;
+          if (p.keyCode === p.UP_ARROW && direction.y !== 1) {
+            direction = { x: 0, y: -1 };
+          } else if (p.keyCode === p.DOWN_ARROW && direction.y !== -1) {
+            direction = { x: 0, y: 1 };
+          } else if (p.keyCode === p.LEFT_ARROW && direction.x !== 1) {
+            direction = { x: -1, y: 0 };
+          } else if (p.keyCode === p.RIGHT_ARROW && direction.x !== -1) {
+            direction = { x: 1, y: 0 };
           }
         };
       });
@@ -178,6 +191,7 @@ export function LearningGame({ game }: LearningGameProps) {
       <div>
         <h3 className="text-xl font-semibold mb-2">{game.title}</h3>
         <p className="text-muted-foreground">{game.description}</p>
+        <p className="text-sm mt-2">{game.config.instructions}</p>
       </div>
       <div ref={canvasRef} className="border rounded-lg overflow-hidden bg-white shadow-sm" />
     </div>
