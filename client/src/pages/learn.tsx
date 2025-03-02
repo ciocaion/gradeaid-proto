@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LearningProfile, LearningSession } from "@shared/schema";
 import { LearningGame } from "@/components/LearningGame";
+import { AIAvatar } from "@/components/AIAvatar";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Learn() {
   const params = useParams<{ id: string }>();
@@ -63,6 +65,19 @@ export default function Learn() {
       sessionsQuery.refetch();
     }
   });
+
+  const handleAIMessage = async (message: string) => {
+    try {
+      const res = await apiRequest("POST", `/api/sessions/${profileQuery.data?.id}/ai-chat`, {
+        message
+      });
+      const data = await res.json();
+      return data.response;
+    } catch (error) {
+      console.error('Failed to get AI response:', error);
+      return "I'm having trouble understanding. Could you rephrase that?";
+    }
+  };
 
   if (profileQuery.isLoading) {
     return <div className="p-8">Loading profile...</div>;
@@ -217,6 +232,11 @@ export default function Learn() {
           </Card>
         ))}
       </div>
+
+      <AIAvatar 
+        onSendMessage={handleAIMessage}
+        initialMessage={`Hi ${profileQuery.data?.learningStyle} learner! I'm your AI tutor. What would you like to learn today?`}
+      />
     </div>
   );
 }

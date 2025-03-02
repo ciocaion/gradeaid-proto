@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { generateLearningContent, generateFeedback } from "./ai";
 import { insertLearningProfileSchema, insertLearningSessionSchema } from "@shared/schema";
 import { ZodError } from "zod";
+import openai from './openai';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Learning profile routes
@@ -34,9 +35,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/sessions", async (req, res) => {
     try {
       const sessionData = insertLearningSessionSchema.parse(req.body);
-      const style = typeof sessionData.content === 'object' ? 
+      const style = typeof sessionData.content === 'object' ?
         (sessionData.content as any)?.learningStyle || 'visual' : 'visual';
-      const needs = typeof sessionData.content === 'object' ? 
+      const needs = typeof sessionData.content === 'object' ?
         (sessionData.content as any)?.specialNeeds : undefined;
 
       const content = await generateLearningContent(
@@ -76,6 +77,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     res.json(updated);
+  });
+
+  app.post("/api/sessions/:id/ai-chat", async (req, res) => {
+    try {
+      const { message } = req.body;
+      const session = await storage.getSession(parseInt(req.params.id));
+      const profile = session ? await storage.getProfile(session.profileId) : null;
+
+      if (!session || !profile) {
+        res.status(404).json({ message: "Session or profile not found" });
+        return;
+      }
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are a friendly and encouraging AI tutor who specializes in adapting to ${profile.learningStyle} learning styles. Keep responses concise and engaging. Use emojis occasionally to make the conversation more lively.`
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ]
+      });
+
+      res.json({ response: response.choices[0].message.content });
+    } catch (error) {
+      console.error('AI chat error:', error);
+      res.status(500).json({ message: "Failed to get AI response" });
+    }
   });
 
   app.get("/api/sessions/profile/:profileId", async (req, res) => {
