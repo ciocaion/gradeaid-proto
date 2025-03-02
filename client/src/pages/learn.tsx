@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LearningProfile, LearningSession } from "@shared/schema";
+import { LearningGame } from "@/components/LearningGame";
 
 export default function Learn() {
   const params = useParams<{ id: string }>();
@@ -115,6 +116,7 @@ export default function Learn() {
                   <TabsTrigger value="content">Content</TabsTrigger>
                   <TabsTrigger value="quiz">Quiz</TabsTrigger>
                   <TabsTrigger value="videos">Videos</TabsTrigger>
+                  <TabsTrigger value="game">Game</TabsTrigger>
                   <TabsTrigger value="activities">Activities</TabsTrigger>
                 </TabsList>
 
@@ -172,6 +174,13 @@ export default function Learn() {
                       </div>
                     ))}
                   </div>
+                </TabsContent>
+                <TabsContent value="game">
+                  {(session.content as any).game ? (
+                    <LearningGame game={(session.content as any).game} />
+                  ) : (
+                    <p className="text-muted-foreground">No interactive game available for this lesson.</p>
+                  )}
                 </TabsContent>
                 <TabsContent value="activities">
                   <ul className="list-disc pl-6 space-y-2">

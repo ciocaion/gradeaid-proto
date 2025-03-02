@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { fetchEducationalShorts } from "./youtube";
-import type { GeneratedContent, VideoResult } from "./types";
+import type { GeneratedContent, VideoResult, GameData } from "./types";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -15,6 +15,8 @@ export async function generateLearningContent(subject: string, style: string, sp
       ${specialNeeds ? `Consider these special needs: ${specialNeeds}` : ''}
       Consider that we are providing Danish language YouTube content, so adjust the suggestions and activities to align with Danish cultural context when possible.
 
+      Include an interactive game related to the subject. Choose either a matching game (matching related concepts) or a sorting game (arranging items in correct order).
+
       Respond with JSON in this format:
       {
         "text": "main educational content",
@@ -25,7 +27,23 @@ export async function generateLearningContent(subject: string, style: string, sp
             "correctAnswer": 0
           }
         ],
-        "suggestions": ["practical activity 1", "practical activity 2"]
+        "suggestions": ["practical activity 1", "practical activity 2"],
+        "game": {
+          "type": "matching OR sorting",
+          "title": "game title",
+          "description": "brief game description",
+          "config": {
+            "instructions": "game instructions",
+            "items": [
+              {
+                "id": "1",
+                "value": "item text",
+                "matches": "matching item text (for matching game)",
+                "correctPosition": 0 //for sorting game
+              }
+            ]
+          }
+        }
       }
     `;
 
