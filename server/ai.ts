@@ -5,18 +5,36 @@ import type { GeneratedContent, VideoResult, GameData } from "./types";
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export async function generateLearningContent(subject: string, style: string, specialNeeds?: string): Promise<GeneratedContent> {
+export async function generateLearningContent(
+  subject: string, 
+  style: string, 
+  preferences?: { preferredDemonstration?: string, highContrast?: boolean, voiceEnabled?: boolean }
+): Promise<GeneratedContent> {
   try {
     // Fetch relevant YouTube shorts first
     const videos = await fetchEducationalShorts(subject);
 
     const prompt = `
-      Generate educational content about "${subject}" adapted for a ${style} learning style.
-      ${specialNeeds ? `Consider these special needs: ${specialNeeds}` : ''}
+      Generate educational content about "${subject}" specifically adapted for a ${style} learning style.
+      The student prefers to demonstrate learning through ${preferences?.preferredDemonstration || 'quizzes'}.
+      ${preferences?.highContrast ? 'Content should be optimized for high contrast visibility.' : ''}
+      ${preferences?.voiceEnabled ? 'Include audio-friendly content descriptions.' : ''}
       Consider that we are providing Danish language YouTube content, so adjust the suggestions and activities to align with Danish cultural context when possible.
 
       Include an educational Snake game where players collect correct items related to the topic.
       The game should have at least 5 correct items and 3 incorrect items that the snake can collect.
+
+      Based on the learning style (${style}), emphasize:
+      ${style === 'visual' ? '- More diagrams and visual explanations\n- Visual metaphors and examples' : ''}
+      ${style === 'auditory' ? '- Spoken explanations and discussions\n- Musical or rhythmic memory aids' : ''}
+      ${style === 'interactive' ? '- Hands-on activities and experiments\n- Interactive simulations' : ''}
+      ${style === 'reading' ? '- Detailed written explanations\n- Text-based examples and case studies' : ''}
+
+      Based on preferred demonstration (${preferences?.preferredDemonstration}), include:
+      ${preferences?.preferredDemonstration === 'quiz' ? '- More practice questions\n- Self-assessment opportunities' : ''}
+      ${preferences?.preferredDemonstration === 'project' ? '- Project ideas and guidelines\n- Step-by-step creation guides' : ''}
+      ${preferences?.preferredDemonstration === 'discussion' ? '- Discussion topics and prompts\n- Debate scenarios' : ''}
+      ${preferences?.preferredDemonstration === 'writing' ? '- Writing prompts and outlines\n- Essay structure suggestions' : ''}
 
       Respond with JSON in this format:
       {

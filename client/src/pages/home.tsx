@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 type Question = {
   text: string;
@@ -60,10 +60,10 @@ const questions: Question[] = [
           <SelectValue placeholder="Select your learning style" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="visual">I learn best by seeing</SelectItem>
-          <SelectItem value="auditory">I learn best by listening</SelectItem>
-          <SelectItem value="interactive">I learn best by doing</SelectItem>
-          <SelectItem value="reading">I learn best by reading</SelectItem>
+          <SelectItem value="visual">I learn best by seeing (videos and diagrams)</SelectItem>
+          <SelectItem value="auditory">I learn best by listening (audio explanations)</SelectItem>
+          <SelectItem value="interactive">I learn best by doing (interactive exercises)</SelectItem>
+          <SelectItem value="reading">I learn best by reading (detailed text)</SelectItem>
         </SelectContent>
       </Select>
     )
@@ -82,10 +82,10 @@ const questions: Question[] = [
           <SelectValue placeholder="Select how you want to demonstrate" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="quiz">Through quizzes</SelectItem>
-          <SelectItem value="project">By creating projects</SelectItem>
-          <SelectItem value="discussion">By discussing</SelectItem>
-          <SelectItem value="writing">By writing</SelectItem>
+          <SelectItem value="quiz">Through quizzes and tests</SelectItem>
+          <SelectItem value="project">By creating my own projects</SelectItem>
+          <SelectItem value="discussion">By discussing and explaining</SelectItem>
+          <SelectItem value="writing">By writing essays or summaries</SelectItem>
         </SelectContent>
       </Select>
     )
@@ -113,17 +113,16 @@ export default function Home() {
 
   const profileMutation = useMutation({
     mutationFn: async (data: InsertLearningProfile) => {
-      // First create the profile
       const profileRes = await apiRequest("POST", "/api/profiles", data);
       const profile = await profileRes.json();
 
-      // Then create a learning session
       const sessionRes = await apiRequest("POST", "/api/sessions", {
         profileId: profile.id,
-        subject: subject,
+        subject,
         content: {
           learningStyle: data.learningStyle,
-          specialNeeds: data.specialNeeds
+          preferredDemonstration: data.preferredDemonstration,
+          preferences: data.preferences
         }
       });
       await sessionRes.json();
@@ -157,92 +156,80 @@ export default function Home() {
             Welcome to GradeAid
           </h1>
           <p className="text-muted-foreground">
-            Your personalized AI learning assistant
+            Your personalized learning assistant
           </p>
         </div>
 
-        <div className="relative">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="absolute -top-32 left-1/2 -translate-x-1/2"
-          >
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
-              <Bot className="w-12 h-12 text-white" />
-            </div>
-          </motion.div>
-
-          <Card>
-            <CardContent className="pt-16">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
-                  <AnimatePresence mode="wait">
-                    {currentQuestion && (
-                      <motion.div
-                        key={step}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="space-y-4"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-blue-500" />
-                          <p className="text-xl font-medium">{currentQuestion.text}</p>
-                        </div>
-                        {currentQuestion.render({
-                          subject,
-                          setSubject,
-                          setValue: form.setValue,
-                          onNext: nextStep
-                        })}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {step === questions.length && (
+        <Card>
+          <CardContent className="pt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
+                <AnimatePresence mode="wait">
+                  {currentQuestion && (
                     <motion.div
+                      key={step}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mt-6 space-y-4"
+                      exit={{ opacity: 0, y: -20 }}
+                      className="space-y-4"
                     >
-                      <div className="space-y-4">
-                        <Label>Accessibility Preferences</Label>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="highContrast">High Contrast Mode</Label>
-                            <Switch
-                              id="highContrast"
-                              onCheckedChange={(checked) => 
-                                form.setValue("preferences.highContrast", checked)
-                              }
-                            />
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="voiceEnabled">Voice Assistance</Label>
-                            <Switch
-                              id="voiceEnabled"
-                              onCheckedChange={(checked) => 
-                                form.setValue("preferences.voiceEnabled", checked)
-                              }
-                            />
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-blue-500" />
+                        <p className="text-xl font-medium">{currentQuestion.text}</p>
                       </div>
-
-                      <Button 
-                        type="submit" 
-                        className="w-full"
-                        disabled={profileMutation.isPending}
-                      >
-                        {profileMutation.isPending ? "Preparing Your Content..." : "Start Learning"}
-                      </Button>
+                      {currentQuestion.render({
+                        subject,
+                        setSubject,
+                        setValue: form.setValue,
+                        onNext: nextStep
+                      })}
                     </motion.div>
                   )}
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
+                </AnimatePresence>
+
+                {step === questions.length && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6 space-y-4"
+                  >
+                    <div className="space-y-4">
+                      <Label>Accessibility Preferences</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="highContrast">High Contrast Mode</Label>
+                          <Switch
+                            id="highContrast"
+                            onCheckedChange={(checked) => 
+                              form.setValue("preferences.highContrast", checked)
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="voiceEnabled">Voice Assistance</Label>
+                          <Switch
+                            id="voiceEnabled"
+                            onCheckedChange={(checked) => 
+                              form.setValue("preferences.voiceEnabled", checked)
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={profileMutation.isPending}
+                    >
+                      {profileMutation.isPending ? "Preparing Your Content..." : "Start Learning"}
+                    </Button>
+                  </motion.div>
+                )}
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
