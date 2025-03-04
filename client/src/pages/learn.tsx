@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { LearningProfile, LearningSession } from "@shared/schema";
 import { LearningGame } from "@/components/LearningGame";
 import { AIAvatar } from "@/components/AIAvatar";
+import { ActivityUpload } from "@/components/ActivityUpload";
 
 export default function Learn() {
   const params = useParams<{ id: string }>();
@@ -153,11 +154,15 @@ export default function Learn() {
                 </TabsContent>
 
                 <TabsContent value="activities">
-                  <ul className="list-disc pl-6 space-y-2">
-                    {(session.content as any).suggestions?.map((suggestion: string, i: number) => (
-                      <li key={i}>{suggestion}</li>
-                    ))}
-                  </ul>
+                  <div className="space-y-6">
+                    <ul className="list-disc pl-6 space-y-2">
+                      {(session.content as any).suggestions?.map((suggestion: string, i: number) => (
+                        <li key={i}>{suggestion}</li>
+                      ))}
+                    </ul>
+
+                    <ActivityUpload subject={session.subject} />
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="help">

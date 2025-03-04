@@ -128,3 +128,37 @@ export async function generateFeedback(userResponse: string, subject: string): P
 
   return response.choices[0].message.content || "Thank you for your response.";
 }
+
+export async function analyzeActivityImage(imageBase64: string, subject: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a supportive and encouraging educational assistant analyzing student work. Provide constructive, positive feedback that acknowledges effort and suggests gentle improvements. Keep feedback friendly and suitable for children."
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Please analyze this student's work related to learning ${subject}. Provide encouraging feedback and gentle suggestions for improvement if needed.`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${imageBase64}`
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    return response.choices[0].message.content || "Great work! Keep practicing!";
+  } catch (error) {
+    console.error('Error analyzing image:', error);
+    return "I had trouble seeing your work clearly. Could you try uploading a clearer picture?";
+  }
+}

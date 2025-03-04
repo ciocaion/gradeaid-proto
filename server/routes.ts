@@ -1,10 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { generateLearningContent, generateFeedback } from "./ai";
+import { generateLearningContent, generateFeedback, analyzeActivityImage } from "./ai";
 import { insertLearningProfileSchema, insertLearningSessionSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import openai from './openai';
+import multer from 'multer';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  }
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Learning profile routes
@@ -114,6 +122,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sessions/profile/:profileId", async (req, res) => {
     const sessions = await storage.getSessionsByProfile(parseInt(req.params.profileId));
     res.json(sessions);
+  });
+
+  // New route for activity image analysis
+  app.post("/api/activities/analyze", upload.single('image'), async (req, res) => {
+    try {
+      if (!req.file || !req.body.subject) {
+        res.status(400).json({ message: "Missing image or subject" });
+        return;
+      }
+
+      const imageBase64 = req.file.buffer.toString('base64');
+      const subject = req.body.subject;
+
+      const feedback = await analyzeActivityImage(imageBase64, subject);
+      res.json({ feedback });
+    } catch (error) {
+      console.error('Error analyzing activity:', error);
+      res.status(500).json({ message: "Failed to analyze image" });
+    }
   });
 
   const httpServer = createServer(app);
