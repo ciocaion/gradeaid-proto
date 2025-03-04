@@ -14,10 +14,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Brain, Book, MessageSquare, PenTool } from "lucide-react";
 
 type Question = {
   text: string;
+  icon: JSX.Element;
   render: (props: {
     subject: string;
     setSubject: (value: string) => void;
@@ -29,6 +30,7 @@ type Question = {
 const questions: Question[] = [
   {
     text: "Choose your preferred language",
+    icon: <MessageSquare className="w-6 h-6 text-[#FF6F00]" />,
     render: ({ setValue, onNext }) => (
       <Select
         name="language"
@@ -49,25 +51,27 @@ const questions: Question[] = [
   },
   {
     text: "What would you like to learn today?",
+    icon: <Book className="w-6 h-6 text-[#6F00FF]" />,
     render: ({ subject, setSubject, onNext }) => (
       <div className="mt-4">
         <Input
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder="e.g., Multiplication with 2-digit numbers"
-          className="text-lg"
+          className="text-lg border-2 border-[#6F00FF] focus:ring-[#FF6F00]"
         />
         <Button 
-          className="mt-4 w-full"
+          className="mt-4 w-full bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] hover:opacity-90"
           onClick={() => subject.trim() && onNext()}
         >
-          Let's Learn This!
+          Let's Start Learning! ✨
         </Button>
       </div>
     )
   },
   {
     text: "How do you prefer to learn?",
+    icon: <Brain className="w-6 h-6 text-[#FF6F00]" />,
     render: ({ setValue, onNext }) => (
       <Select
         name="learningStyle"
@@ -80,16 +84,17 @@ const questions: Question[] = [
           <SelectValue placeholder="Select your learning style" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="visual">I learn best by seeing (videos and diagrams)</SelectItem>
-          <SelectItem value="auditory">I learn best by listening (audio explanations)</SelectItem>
-          <SelectItem value="interactive">I learn best by doing (interactive exercises)</SelectItem>
-          <SelectItem value="reading">I learn best by reading (detailed text)</SelectItem>
+          <SelectItem value="visual">👀 I learn best by seeing (videos and diagrams)</SelectItem>
+          <SelectItem value="auditory">👂 I learn best by listening (audio explanations)</SelectItem>
+          <SelectItem value="interactive">🎮 I learn best by doing (interactive exercises)</SelectItem>
+          <SelectItem value="reading">📚 I learn best by reading (detailed text)</SelectItem>
         </SelectContent>
       </Select>
     )
   },
   {
     text: "How would you like to show what you've learned?",
+    icon: <PenTool className="w-6 h-6 text-[#6F00FF]" />,
     render: ({ setValue, onNext }) => (
       <Select
         name="preferredDemonstration"
@@ -102,10 +107,10 @@ const questions: Question[] = [
           <SelectValue placeholder="Select how you want to demonstrate" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="quiz">Through quizzes and tests</SelectItem>
-          <SelectItem value="project">By creating my own projects</SelectItem>
-          <SelectItem value="discussion">By discussing and explaining</SelectItem>
-          <SelectItem value="writing">By writing essays or summaries</SelectItem>
+          <SelectItem value="quiz">✅ Through quizzes and tests</SelectItem>
+          <SelectItem value="project">🎨 By creating my own projects</SelectItem>
+          <SelectItem value="discussion">💭 By discussing and explaining</SelectItem>
+          <SelectItem value="writing">✍️ By writing essays or summaries</SelectItem>
         </SelectContent>
       </Select>
     )
@@ -152,15 +157,15 @@ export default function Home() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Ready to Learn!",
-        description: "Your personalized learning content has been prepared.",
+        title: "🎉 Ready to Learn!",
+        description: "Your personalized learning adventure is about to begin!",
       });
       setLocation(`/learn/${data.id}`);
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to create learning session. Please try again.",
+        title: "Oops!",
+        description: "Something went wrong. Let's try again!",
         variant: "destructive"
       });
     }
@@ -170,18 +175,24 @@ export default function Home() {
   const currentQuestion = questions[step];
 
   return (
-    <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-orange-50 p-6 flex items-center justify-center">
       <div className="max-w-2xl w-full space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-            Welcome to GradeAid
-          </h1>
-          <p className="text-muted-foreground">
-            Your personalized learning assistant
+        <div className="text-center space-y-4">
+          <motion.h1 
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-5xl font-bold tracking-tight"
+          >
+            <span className="bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] bg-clip-text text-transparent">
+              Welcome to GradeAid!
+            </span>
+          </motion.h1>
+          <p className="text-lg text-muted-foreground">
+            Let's make learning fun and exciting! 🚀
           </p>
         </div>
 
-        <Card>
+        <Card className="border-2 border-[#6F00FF]/20">
           <CardContent className="pt-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
@@ -194,8 +205,8 @@ export default function Home() {
                       exit={{ opacity: 0, y: -20 }}
                       className="space-y-4"
                     >
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-blue-500" />
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-[#6F00FF]/10 to-[#FF6F00]/10 rounded-lg">
+                        {currentQuestion.icon}
                         <p className="text-xl font-medium">{currentQuestion.text}</p>
                       </div>
                       {currentQuestion.render({
@@ -215,8 +226,8 @@ export default function Home() {
                     className="mt-6 space-y-4"
                   >
                     <div className="space-y-4">
-                      <Label>Accessibility Preferences</Label>
-                      <div className="space-y-2">
+                      <Label className="text-lg font-medium">Accessibility Options</Label>
+                      <div className="space-y-3 p-4 bg-gradient-to-r from-[#6F00FF]/10 to-[#FF6F00]/10 rounded-lg">
                         <div className="flex items-center justify-between">
                           <Label htmlFor="highContrast">High Contrast Mode</Label>
                           <Switch
@@ -240,10 +251,10 @@ export default function Home() {
 
                     <Button 
                       type="submit" 
-                      className="w-full"
+                      className="w-full bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] hover:opacity-90 text-white font-medium text-lg h-12"
                       disabled={profileMutation.isPending}
                     >
-                      {profileMutation.isPending ? "Preparing Your Content..." : "Start Learning"}
+                      {profileMutation.isPending ? "🌟 Preparing Your Adventure..." : "🚀 Start Learning!"}
                     </Button>
                   </motion.div>
                 )}
