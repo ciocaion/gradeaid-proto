@@ -8,18 +8,24 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export async function generateLearningContent(
   subject: string, 
   style: string, 
-  preferences?: { preferredDemonstration?: string, highContrast?: boolean, voiceEnabled?: boolean }
+  preferences?: { 
+    preferredDemonstration?: string, 
+    highContrast?: boolean, 
+    voiceEnabled?: boolean,
+    language?: 'en' | 'da'
+  }
 ): Promise<GeneratedContent> {
   try {
     // Fetch relevant YouTube shorts first
-    const videos = await fetchEducationalShorts(subject);
+    const videos = await fetchEducationalShorts(subject, preferences?.language === 'da');
 
     const prompt = `
       Generate educational content about "${subject}" specifically adapted for a ${style} learning style.
+      The content should be in ${preferences?.language === 'da' ? 'Danish' : 'English'}.
       The student prefers to demonstrate learning through ${preferences?.preferredDemonstration || 'quizzes'}.
       ${preferences?.highContrast ? 'Content should be optimized for high contrast visibility.' : ''}
       ${preferences?.voiceEnabled ? 'Include audio-friendly content descriptions.' : ''}
-      Consider that we are providing Danish language YouTube content, so adjust the suggestions and activities to align with Danish cultural context when possible.
+      ${preferences?.language === 'da' ? 'Content should use Danish educational terminology and cultural references.' : ''}
 
       Include an educational Snake game where players collect correct items related to the topic.
       The game should have at least 5 correct items and 3 incorrect items that the snake can collect.

@@ -28,6 +28,26 @@ type Question = {
 
 const questions: Question[] = [
   {
+    text: "Choose your preferred language",
+    render: ({ setValue, onNext }) => (
+      <Select
+        name="language"
+        onValueChange={(value) => {
+          setValue("preferences.language", value);
+          onNext();
+        }}
+      >
+        <SelectTrigger className="mt-4">
+          <SelectValue placeholder="Select your preferred language" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="en">English</SelectItem>
+          <SelectItem value="da">Danish (Dansk)</SelectItem>
+        </SelectContent>
+      </Select>
+    )
+  },
+  {
     text: "What would you like to learn today?",
     render: ({ subject, setSubject, onNext }) => (
       <div className="mt-4">
@@ -106,7 +126,8 @@ export default function Home() {
       preferences: {
         textSize: "medium",
         highContrast: false,
-        voiceEnabled: false
+        voiceEnabled: false,
+        language: "en"
       }
     }
   });

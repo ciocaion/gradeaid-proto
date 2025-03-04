@@ -29,7 +29,8 @@ export const insertLearningProfileSchema = createInsertSchema(learningProfiles)
     preferences: z.object({
       textSize: z.string(),
       highContrast: z.boolean(),
-      voiceEnabled: z.boolean()
+      voiceEnabled: z.boolean(),
+      language: z.enum(["en", "da"])
     })
   });
 
