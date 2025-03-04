@@ -1,17 +1,17 @@
 import { type VideoResult } from "./types";
 
 // Function to fetch educational YouTube Shorts
-export async function fetchEducationalShorts(topic: string, maxResults = 3): Promise<VideoResult[]> {
+export async function fetchEducationalShorts(topic: string, isDanish = false): Promise<VideoResult[]> {
   try {
     const params = new URLSearchParams({
       part: 'snippet',
-      q: `${topic} dansk educational #shorts`,  // Add 'dansk' to prioritize Danish content
-      maxResults: maxResults.toString(),
+      q: `${topic} ${isDanish ? 'dansk' : ''} educational #shorts`,
+      maxResults: '3',  // Fixed: Changed from boolean to string
       type: 'video',
       videoDuration: 'short',
-      relevanceLanguage: 'da',
-      regionCode: 'DK',
-      hl: 'da',
+      relevanceLanguage: isDanish ? 'da' : 'en',
+      regionCode: isDanish ? 'DK' : 'US',
+      hl: isDanish ? 'da' : 'en',
       key: process.env.YOUTUBE_API_KEY!
     });
 
@@ -27,8 +27,8 @@ export async function fetchEducationalShorts(topic: string, maxResults = 3): Pro
     const data = await response.json();
     console.log('Found total videos:', data.items?.length || 0);
 
-    // Enhanced Danish content detection
-    const danishVideos = data.items.filter((item: any) => {
+    // Enhanced Danish content detection if isDanish is true
+    const filteredVideos = isDanish ? data.items.filter((item: any) => {
       const title = item.snippet.title.toLowerCase();
       const description = item.snippet.description.toLowerCase();
 
@@ -43,12 +43,12 @@ export async function fetchEducationalShorts(topic: string, maxResults = 3): Pro
       return danishMarkers.some(marker => 
         title.includes(marker) || description.includes(marker)
       );
-    });
+    }) : data.items;
 
-    console.log('Filtered Danish videos:', danishVideos.length);
+    console.log('Filtered videos:', filteredVideos.length);
 
-    // If no Danish videos found, return a subset of all videos
-    const videosToUse = danishVideos.length > 0 ? danishVideos : data.items.slice(0, maxResults);
+    // If no filtered videos found, return a subset of all videos
+    const videosToUse = filteredVideos.length > 0 ? filteredVideos : data.items.slice(0, 3);
 
     return videosToUse.map((item: any) => ({
       id: item.id.videoId,
