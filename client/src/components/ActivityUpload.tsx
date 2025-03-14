@@ -13,7 +13,6 @@ interface ActivityUploadProps {
 export function ActivityUpload({ subject }: ActivityUploadProps) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -22,7 +21,6 @@ export function ActivityUpload({ subject }: ActivityUploadProps) {
       const file = e.target.files[0];
       setImage(file);
       setPreview(URL.createObjectURL(file));
-      setFeedback(null);
     }
   };
 
@@ -30,29 +28,35 @@ export function ActivityUpload({ subject }: ActivityUploadProps) {
     if (!image) return;
 
     setIsLoading(true);
-    const formData = new FormData();
-    formData.append('image', image);
-    formData.append('subject', subject);
-
     try {
+      const formData = new FormData();
+      formData.append('image', image);
+      formData.append('subject', subject);
+
       const response = await fetch('/api/activities/analyze', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
 
-      if (!response.ok) throw new Error('Failed to analyze image');
+      if (!response.ok) {
+        throw new Error('Failed to analyze image');
+      }
 
       const data = await response.json();
-      setFeedback(data.feedback);
       toast({
-        title: "Analysis Complete! 🎉",
-        description: "We've analyzed your work!",
+        title: "Great work! 🌟",
+        description: data.feedback,
+        duration: 5000
       });
+      // Dispatch event when feedback is received
+      window.dispatchEvent(new Event('feedbackReceived'));
     } catch (error) {
+      console.error('Error analyzing image:', error);
       toast({
         title: "Oops!",
-        description: "Something went wrong analyzing your image. Please try again!",
-        variant: "destructive"
+        description: error instanceof Error ? error.message : "I had trouble analyzing your work. Could you try uploading a clearer picture?",
+        variant: "destructive",
+        duration: 5000
       });
     } finally {
       setIsLoading(false);
@@ -120,20 +124,6 @@ export function ActivityUpload({ subject }: ActivityUploadProps) {
               </Button>
             )}
           </div>
-
-          <AnimatePresence>
-            {feedback && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-4 bg-muted rounded-lg"
-              >
-                <p className="font-medium">AI Feedback:</p>
-                <p className="mt-2">{feedback}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </CardContent>
       </Card>
     </div>

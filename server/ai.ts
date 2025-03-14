@@ -20,72 +20,77 @@ export async function generateLearningContent(
     const videos = await fetchEducationalShorts(subject, preferences?.language === 'da');
 
     const prompt = `
-      Generate educational content about "${subject}" specifically adapted for a ${style} learning style.
+      Create a bite-sized, engaging learning sequence about "${subject}" for a ${style} learner.
       The content should be in ${preferences?.language === 'da' ? 'Danish' : 'English'}.
-      The student prefers to demonstrate learning through ${preferences?.preferredDemonstration || 'quizzes'}.
-      ${preferences?.highContrast ? 'Content should be optimized for high contrast visibility.' : ''}
-      ${preferences?.voiceEnabled ? 'Include audio-friendly content descriptions.' : ''}
-      ${preferences?.language === 'da' ? 'Content should use Danish educational terminology and cultural references.' : ''}
+      Make it similar to Duolingo's approach: short, focused, and progressive.
 
-      Include an educational Snake game where players collect correct items related to the topic.
-      The game should have at least 5 correct items and 3 incorrect items that the snake can collect.
+      Structure the content in this sequence:
+      1. Quick Introduction (2-3 short sentences max)
+      2. Key Concept (1 main point with a simple example)
+      3. Mini-Quiz (2-3 quick questions)
+      4. Practice Activity (interactive element)
+      5. Game Challenge (simple snake game)
 
-      Based on the learning style (${style}), emphasize:
-      ${style === 'visual' ? '- More diagrams and visual explanations\n- Visual metaphors and examples' : ''}
-      ${style === 'auditory' ? '- Spoken explanations and discussions\n- Musical or rhythmic memory aids' : ''}
-      ${style === 'interactive' ? '- Hands-on activities and experiments\n- Interactive simulations' : ''}
-      ${style === 'reading' ? '- Detailed written explanations\n- Text-based examples and case studies' : ''}
+      Learning style adaptation (${style}):
+      ${style === 'visual' ? '- Use emojis and simple diagrams\n- Include visual patterns' : ''}
+      ${style === 'auditory' ? '- Include rhythmic patterns\n- Use sound-based examples' : ''}
+      ${style === 'interactive' ? '- Add hands-on mini-exercises\n- Include real-world connections' : ''}
+      ${style === 'reading' ? '- Short, clear text blocks\n- Simple word associations' : ''}
 
-      Based on preferred demonstration (${preferences?.preferredDemonstration}), include:
-      ${preferences?.preferredDemonstration === 'quiz' ? '- More practice questions\n- Self-assessment opportunities' : ''}
-      ${preferences?.preferredDemonstration === 'project' ? '- Project ideas and guidelines\n- Step-by-step creation guides' : ''}
-      ${preferences?.preferredDemonstration === 'discussion' ? '- Discussion topics and prompts\n- Debate scenarios' : ''}
-      ${preferences?.preferredDemonstration === 'writing' ? '- Writing prompts and outlines\n- Essay structure suggestions' : ''}
+      The game should be a snake game where players collect correct items and avoid incorrect ones.
+      Make the game items directly related to the subject being taught.
+      
+      Keep ALL text extremely concise and engaging, using emojis where appropriate.
+      Make it feel like a game, not a lecture.
 
       Respond with JSON in this format:
       {
-        "text": "main educational content",
+        "text": "Introduction (2-3 sentences) + Key Concept (1 main point)",
         "quiz": [
           {
-            "question": "question text",
-            "options": ["option1", "option2", "option3", "option4"],
-            "correctAnswer": 0
+            "question": "short, engaging question",
+            "options": ["option 1", "option 2", "option 3"],
+            "correctAnswer": 0,
+            "explanation": "brief explanation"
           }
         ],
-        "suggestions": ["practical activity 1", "practical activity 2"],
+        "practice": {
+          "type": "interactive",
+          "description": "brief activity description",
+          "steps": ["step 1", "step 2"]
+        },
         "game": {
           "type": "snake",
-          "title": "game title",
-          "description": "brief game description",
+          "title": "Snake Learning Game",
+          "description": "Collect the correct items with your snake!",
           "config": {
-            "instructions": "game instructions",
+            "instructions": "Use arrow keys to move. Collect correct items, avoid wrong ones!",
             "gridSize": 20,
             "speed": 150,
             "items": [
               {
                 "id": "1",
-                "value": "correct item text",
+                "value": "correct item 1",
                 "isCorrect": true,
                 "points": 10
               },
               {
                 "id": "2",
-                "value": "incorrect item text",
+                "value": "incorrect item 1",
                 "isCorrect": false,
                 "points": -5
               }
             ]
           }
         }
-      }
-    `;
+      }"`;
 
-    const response = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are an expert educational content creator skilled in Universal Design for Learning principles, with knowledge of Danish educational context."
+          content: "You are an expert in creating engaging, bite-sized educational content similar to Duolingo. Keep content concise, fun, and progressive. Create game items that are directly related to the subject matter."
         },
         {
           role: "user",
@@ -95,19 +100,15 @@ export async function generateLearningContent(
       response_format: { type: "json_object" }
     });
 
-    const content = JSON.parse(response.choices[0].message.content || '{"text": "Failed to generate content"}');
+    const content = JSON.parse(completion.choices[0].message.content || "{}");
 
-    // Add the videos to the content
     return {
       ...content,
-      videos
+      videos: videos?.slice(0, 2) || [], // Only include 2 most relevant videos
     };
   } catch (error) {
     console.error('Error generating content:', error);
-    return {
-      text: "Failed to generate content. Please try again.",
-      videos: []
-    };
+    throw error;
   }
 }
 
