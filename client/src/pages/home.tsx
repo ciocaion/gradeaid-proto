@@ -138,7 +138,7 @@ const questions: Question[] = [
 ];
 
 export default function Home() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [subject, setSubject] = useState("");
@@ -180,7 +180,7 @@ export default function Home() {
         title: "🎉 Ready to Learn!",
         description: "Your personalized learning adventure is about to begin!",
       });
-      setLocation(`/learn/${data.id}`);
+      navigate(`/learn/${data.id}`);
     },
     onError: () => {
       toast({
@@ -196,118 +196,120 @@ export default function Home() {
   const progress = ((step + 1) / (questions.length + 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-orange-50 p-6">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <div className="text-center space-y-4">
-          <motion.h1 
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-5xl font-bold tracking-tight"
-          >
-            <span className="bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] bg-clip-text text-transparent">
-              Welcome to GradeAid!
-            </span>
-          </motion.h1>
-          <p className="text-xl text-muted-foreground">
-            Let's make learning fun and exciting! 🚀
-          </p>
-        </div>
+    <div className="min-h-screen bg-orange-50">
+      <div className="container mx-auto py-8">
+        <div className="max-w-3xl mx-auto space-y-8">
+          <div className="text-center space-y-4">
+            <motion.h1 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-5xl font-bold tracking-tight"
+            >
+              <span className="bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] bg-clip-text text-transparent">
+                Welcome to GradeAid!
+              </span>
+            </motion.h1>
+            <p className="text-xl text-muted-foreground">
+              Let's make learning fun and exciting! 🚀
+            </p>
+          </div>
 
-        <Card className="border-2 border-[#6F00FF]/20">
-          <CardContent className="pt-6">
-            {/* Progress bar */}
-            <div className="mb-8">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-[#6F00FF] to-[#FF6F00]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5 }}
-                />
+          <Card className="border-2 border-[#6F00FF]/20">
+            <CardContent className="pt-6">
+              {/* Progress bar */}
+              <div className="mb-8">
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-[#6F00FF] to-[#FF6F00]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground mt-2 text-center">
+                  Step {step + 1} of {questions.length + 1}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground mt-2 text-center">
-                Step {step + 1} of {questions.length + 1}
-              </p>
-            </div>
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
-                <AnimatePresence mode="wait">
-                  {currentQuestion && (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => profileMutation.mutate(data))}>
+                  <AnimatePresence mode="wait">
+                    {currentQuestion && (
+                      <motion.div
+                        key={step}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="space-y-4"
+                      >
+                        <div className="flex flex-col gap-3 p-4 bg-gradient-to-r from-[#6F00FF]/10 to-[#FF6F00]/10 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            {currentQuestion.icon}
+                            <h2 className="text-2xl font-medium">{currentQuestion.text}</h2>
+                          </div>
+                          <p className="text-muted-foreground ml-9">
+                            {currentQuestion.description}
+                          </p>
+                        </div>
+                        {currentQuestion.render({
+                          subject,
+                          setSubject,
+                          setValue: form.setValue,
+                          onNext: nextStep
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {step === questions.length && (
                     <motion.div
-                      key={step}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="space-y-4"
+                      className="mt-6 space-y-6"
                     >
-                      <div className="flex flex-col gap-3 p-4 bg-gradient-to-r from-[#6F00FF]/10 to-[#FF6F00]/10 rounded-lg">
+                      <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                          {currentQuestion.icon}
-                          <h2 className="text-2xl font-medium">{currentQuestion.text}</h2>
+                          <Sparkles className="w-6 h-6 text-[#FF6F00]" />
+                          <h2 className="text-2xl font-medium">Accessibility Options</h2>
                         </div>
-                        <p className="text-muted-foreground ml-9">
-                          {currentQuestion.description}
-                        </p>
+                        <div className="space-y-4 p-6 bg-gradient-to-r from-[#6F00FF]/10 to-[#FF6F00]/10 rounded-lg">
+                          <div className="space-y-2">
+                            <Label htmlFor="highContrast" className="text-lg">High Contrast Mode</Label>
+                            <p className="text-sm text-muted-foreground">Makes text and elements easier to see</p>
+                            <Switch
+                              id="highContrast"
+                              onCheckedChange={(checked) => 
+                                form.setValue("preferences.highContrast", checked)
+                              }
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="voiceEnabled" className="text-lg">Voice Assistance</Label>
+                            <p className="text-sm text-muted-foreground">Enables audio feedback and instructions</p>
+                            <Switch
+                              id="voiceEnabled"
+                              onCheckedChange={(checked) => 
+                                form.setValue("preferences.voiceEnabled", checked)
+                              }
+                            />
+                          </div>
+                        </div>
                       </div>
-                      {currentQuestion.render({
-                        subject,
-                        setSubject,
-                        setValue: form.setValue,
-                        onNext: nextStep
-                      })}
+
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] hover:opacity-90 text-white font-medium text-xl h-14"
+                        disabled={profileMutation.isPending}
+                      >
+                        {profileMutation.isPending ? "🌟 Preparing Your Adventure..." : "🚀 Start Learning!"}
+                      </Button>
                     </motion.div>
                   )}
-                </AnimatePresence>
-
-                {step === questions.length && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-6 space-y-6"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <Sparkles className="w-6 h-6 text-[#FF6F00]" />
-                        <h2 className="text-2xl font-medium">Accessibility Options</h2>
-                      </div>
-                      <div className="space-y-4 p-6 bg-gradient-to-r from-[#6F00FF]/10 to-[#FF6F00]/10 rounded-lg">
-                        <div className="space-y-2">
-                          <Label htmlFor="highContrast" className="text-lg">High Contrast Mode</Label>
-                          <p className="text-sm text-muted-foreground">Makes text and elements easier to see</p>
-                          <Switch
-                            id="highContrast"
-                            onCheckedChange={(checked) => 
-                              form.setValue("preferences.highContrast", checked)
-                            }
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="voiceEnabled" className="text-lg">Voice Assistance</Label>
-                          <p className="text-sm text-muted-foreground">Enables audio feedback and instructions</p>
-                          <Switch
-                            id="voiceEnabled"
-                            onCheckedChange={(checked) => 
-                              form.setValue("preferences.voiceEnabled", checked)
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-[#6F00FF] to-[#FF6F00] hover:opacity-90 text-white font-medium text-xl h-14"
-                      disabled={profileMutation.isPending}
-                    >
-                      {profileMutation.isPending ? "🌟 Preparing Your Adventure..." : "🚀 Start Learning!"}
-                    </Button>
-                  </motion.div>
-                )}
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

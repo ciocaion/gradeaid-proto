@@ -6,6 +6,7 @@ import { insertLearningProfileSchema, insertLearningSessionSchema } from "@share
 import { ZodError } from "zod";
 import openai from './openai';
 import multer from 'multer';
+import { Router } from "express";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -13,6 +14,8 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   }
 });
+
+const router = Router();
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Learning profile routes
@@ -143,6 +146,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  router.post("/api/tts", async (req, res) => {
+    try {
+      const { text } = req.body;
+      
+      // Using the Rachel voice which is child-friendly
+      const VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+      
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`, {
+        method: "POST",
+        headers: {
+          "Accept": "audio/mpeg",
+          "Content-Type": "application/json",
+          "xi-api-key": process.env.ELEVENLABS_API_KEY || "",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: "eleven_monolingual_v1",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: 0.35,
+            use_speaker_boost: true
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("ElevenLabs API error:", error);
+        throw new Error("Failed to generate speech");
+      }
+
+      const audioBuffer = await response.arrayBuffer();
+      
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Transfer-Encoding", "chunked");
+      res.send(Buffer.from(audioBuffer));
+    } catch (error) {
+      console.error("TTS error:", error);
+      res.status(500).json({ error: "Failed to generate speech" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
+
+export { router };
